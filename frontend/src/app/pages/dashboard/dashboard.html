@@ -1,0 +1,91 @@
+<h1>Dashboard</h1>
+<p class="subtitle">Your learning progress at a glance.</p>
+
+@if (error()) {
+  <div class="error">{{ error() }}</div>
+} @else if (!progress()) {
+  <div class="loading"><span class="spinner"></span> Loading your progress…</div>
+} @else {
+  @let p = progress()!;
+  <section class="card goal">
+    @if (p.currentGoal) {
+      <div>
+        <p class="muted small">Current goal</p>
+        <h2 class="goal-title">{{ p.currentGoal.skill }}</h2>
+        <p class="muted small">{{ p.currentGoal.durationMonths }}-month plan · started {{ p.currentGoal.startedAt.slice(0, 10) }}</p>
+      </div>
+      <a routerLink="/chat" class="btn">Ask the coach what's next</a>
+    } @else {
+      <div>
+        <h2 class="goal-title">Set your first goal</h2>
+        <p class="muted small">Create a roadmap and the coach will track your progress against it.</p>
+      </div>
+      <a routerLink="/plan" class="btn">Create a roadmap</a>
+    }
+  </section>
+
+  <section class="grid stats">
+    <div class="card stat">
+      <p class="muted small">Projects done</p>
+      <p class="stat-value">{{ p.projects.completionPercent }}%</p>
+      <div class="bar"><span [style.width.%]="p.projects.completionPercent"></span></div>
+      <p class="muted small">{{ p.projects.done }} of {{ p.projects.total }}</p>
+    </div>
+    <div class="card stat">
+      <p class="muted small">Quiz average</p>
+      <p class="stat-value">{{ p.quizzes.averagePercent ?? '–' }}{{ p.quizzes.averagePercent !== null ? '%' : '' }}</p>
+      <p class="muted small">{{ p.quizzes.attempts }} attempt{{ p.quizzes.attempts === 1 ? '' : 's' }}</p>
+    </div>
+    <div class="card stat">
+      <p class="muted small">Review rating</p>
+      <p class="stat-value">{{ p.reviews.averageRating ?? '–' }}{{ p.reviews.averageRating !== null ? '/10' : '' }}</p>
+      <p class="muted small">{{ p.reviews.count }} review{{ p.reviews.count === 1 ? '' : 's' }}</p>
+    </div>
+    <div class="card stat">
+      <p class="muted small">Mock interviews</p>
+      <p class="stat-value">{{ p.mockInterviews }}</p>
+      <p class="muted small">practised</p>
+    </div>
+  </section>
+
+  <section class="grid two">
+    <div class="card">
+      <h2>Project queue</h2>
+      @for (proj of p.projects.queue; track proj.id) {
+        <div class="queue-item">
+          <span class="queue-title">{{ proj.title }}</span>
+          <select (change)="setStatus(proj.id, $any($event.target).value)" [attr.aria-label]="'Status of ' + proj.title">
+            @for (s of statuses; track s) {
+              <option [value]="s" [selected]="s === proj.status">{{ statusLabel[s] }}</option>
+            }
+          </select>
+        </div>
+      } @empty {
+        <p class="muted small">No open projects. <a routerLink="/plan">Generate one</a> for what you're learning.</p>
+      }
+    </div>
+
+    <div class="card">
+      <h2>Quiz results by topic</h2>
+      @for (t of p.quizzes.byTopic; track t.topic) {
+        <div class="topic">
+          <div class="topic-head">
+            <span>{{ t.topic }}</span>
+            <span class="chip" [class]="'chip ' + scoreClass(t.averagePercent)">{{ t.averagePercent }}%</span>
+          </div>
+          <div class="bar" [class]="'bar ' + scoreClass(t.averagePercent)"><span [style.width.%]="t.averagePercent"></span></div>
+        </div>
+      } @empty {
+        <p class="muted small">No quiz attempts yet. <a routerLink="/quiz">Take a quiz</a>.</p>
+      }
+      @if (p.quizzes.weakTopics.length) {
+        <p class="weak small">
+          Focus next on:
+          @for (w of p.quizzes.weakTopics; track w) {
+            <span class="chip bad">{{ w }}</span>
+          }
+        </p>
+      }
+    </div>
+  </section>
+}

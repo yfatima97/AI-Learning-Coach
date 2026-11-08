@@ -1,0 +1,48 @@
+<h1>Quiz</h1>
+<p class="subtitle">Generate a quiz on any topic. Your score is saved and weak topics show on the dashboard.</p>
+
+<form class="card row" (submit)="$event.preventDefault(); generate()">
+  <label class="grow">Topic <input [(ngModel)]="topic" name="topic" required /></label>
+  <label>Difficulty
+    <select [(ngModel)]="difficulty" name="difficulty">
+      <option value="beginner">Beginner</option>
+      <option value="intermediate">Intermediate</option>
+      <option value="advanced">Advanced</option>
+    </select>
+  </label>
+  <label>Questions <input type="number" min="1" max="20" [(ngModel)]="count" name="count" class="narrow" /></label>
+  <button class="btn" type="submit" [disabled]="busy() || !topic.trim()">{{ quiz() ? 'New quiz' : 'Generate quiz' }}</button>
+</form>
+
+@if (error()) { <div class="error">{{ error() }}</div> }
+@if (busy() && !quiz()) { <div class="loading pad"><span class="spinner"></span> Writing your quiz…</div> }
+
+@if (result(); as r) {
+  <div class="card score" [class.pass]="r.percent >= 70">
+    <p class="score-value">{{ r.score }} / {{ r.total }} · {{ r.percent }}%</p>
+    <p class="muted">{{ r.percent >= 70 ? 'Nice work! Saved to your progress.' : 'Saved. ' + r.topic + ' is now flagged as a topic to review.' }}</p>
+  </div>
+}
+
+@if (quiz(); as q) {
+  <div class="stack questions">
+    @for (question of q.questions; track $index; let qi = $index) {
+      <div class="card">
+        <p class="q"><span class="qn">{{ qi + 1 }}</span>{{ question.question }}</p>
+        <div class="options">
+          @for (opt of question.options; track $index; let oi = $index) {
+            <button type="button" class="option" [class]="'option ' + optionState(qi, oi)" (click)="pick(qi, oi)" [disabled]="!!result()">
+              <span class="letter">{{ letter(oi) }}</span>{{ label(opt) }}
+            </button>
+          }
+        </div>
+        @if (result(); as r) {
+          <p class="explain small"><strong>{{ r.results[qi].correct ? 'Correct.' : 'Not quite.' }}</strong> {{ r.results[qi].explanation }}</p>
+        }
+      </div>
+    }
+    @if (!result()) {
+      <button class="btn submit" (click)="submit()" [disabled]="!allAnswered() || busy()">Submit answers</button>
+    }
+  </div>
+}

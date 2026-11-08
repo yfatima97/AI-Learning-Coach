@@ -1,0 +1,35 @@
+<h1>Plan</h1>
+<p class="subtitle">Set a goal with a roadmap, or get a hands-on project for what you just learned. Both are saved to your dashboard.</p>
+
+<div class="grid two">
+  <form class="card stack" (submit)="$event.preventDefault(); roadmap()">
+    <h2>Roadmap</h2>
+    <label>I want to learn <input [(ngModel)]="skill" name="skill" /></label>
+    <div class="row">
+      <label>Months <input type="number" min="1" max="24" [(ngModel)]="months" name="months" class="narrow" /></label>
+      <label>My level
+        <select [(ngModel)]="level" name="level">
+          <option value="beginner">Beginner</option>
+          <option value="intermediate">Intermediate</option>
+          <option value="advanced">Advanced</option>
+        </select>
+      </label>
+    </div>
+    <button class="btn submit" type="submit" [disabled]="busy() || !skill.trim()">Create roadmap</button>
+  </form>
+
+  <form class="card stack" (submit)="$event.preventDefault(); project()">
+    <h2>Practice project</h2>
+    <label>What did you just learn? <input [(ngModel)]="learned" name="learned" placeholder="e.g. Python loops and functions" /></label>
+    <p class="muted small">The project is added to your queue on the <a routerLink="/">dashboard</a>.</p>
+    <button class="btn submit" type="submit" [disabled]="busy() || !learned.trim()">Generate project</button>
+  </form>
+</div>
+
+@if (busy()) {
+  <div class="loading pad"><span class="spinner"></span> {{ kind() === 'roadmap' ? 'Planning your roadmap… this can take a minute.' : 'Designing your project…' }}</div>
+}
+@if (error()) { <div class="error pad">{{ error() }}</div> }
+@if (output()) {
+  <div class="card pad md" [innerHTML]="output() | markdown"></div>
+}
