@@ -1,0 +1,38 @@
+<h1>Review my work</h1>
+<p class="subtitle">Get feedback like a senior engineer would give: strengths, weaknesses, improvements and a score.</p>
+
+<div class="card stack">
+  <div class="tabs" role="tablist">
+    <button role="tab" [class.active]="mode() === 'code'" (click)="mode.set('code')">Paste code</button>
+    <button role="tab" [class.active]="mode() === 'github'" (click)="mode.set('github')">GitHub repo</button>
+  </div>
+  <form class="stack" (submit)="$event.preventDefault(); run()">
+    @if (mode() === 'code') {
+      <label>Your code <textarea [(ngModel)]="code" name="code" rows="12" placeholder="Paste your code here…"></textarea></label>
+      <label>What was the assignment? (optional) <input [(ngModel)]="context" name="context" placeholder="e.g. CineMatch movie recommender" /></label>
+    } @else {
+      <label>Public repository URL <input [(ngModel)]="url" name="url" placeholder="https://github.com/you/your-project" /></label>
+    }
+    <button class="btn submit" type="submit" [disabled]="busy() || (mode() === 'code' ? !code.trim() : !url.trim())">Review</button>
+  </form>
+</div>
+
+@if (busy()) { <div class="loading pad"><span class="spinner"></span> Reviewing… this takes about 30 seconds.</div> }
+@if (error()) { <div class="error pad">{{ error() }}</div> }
+
+@if (result(); as r) {
+  <div class="card result">
+    <div class="head">
+      <div>
+        @if (r.repo) { <p class="muted small">{{ r.repo }} · {{ r.filesReviewed?.length }} files reviewed</p> }
+        <p class="summary">{{ r.summary }}</p>
+      </div>
+      <span class="rating" [class]="'rating ' + ratingClass(r.rating)">{{ r.rating }}<small>/10</small></span>
+    </div>
+    <div class="cols">
+      <div><h2>Strengths</h2><ul>@for (s of r.strengths; track $index) { <li>{{ s }}</li> }</ul></div>
+      <div><h2>Weaknesses</h2><ul>@for (s of r.weaknesses; track $index) { <li>{{ s }}</li> }</ul></div>
+      <div><h2>Improvements</h2><ul>@for (s of r.improvements; track $index) { <li>{{ s }}</li> }</ul></div>
+    </div>
+  </div>
+}

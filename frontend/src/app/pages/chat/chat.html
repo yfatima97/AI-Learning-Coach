@@ -1,0 +1,43 @@
+<h1>Coach</h1>
+<p class="subtitle">Chat with your coach. It picks the right tools: roadmaps, projects, quizzes, reviews, your notes and your progress.</p>
+
+<div class="chat card">
+  <div class="log" #log>
+    @for (m of messages(); track $index) {
+      <div class="msg" [class.user]="m.role === 'user'">
+        @if (m.role === 'user') {
+          <div class="bubble">{{ m.content }}</div>
+        } @else {
+          <div class="bubble md" [innerHTML]="m.content | markdown"></div>
+        }
+      </div>
+    } @empty {
+      <div class="empty">
+        <p class="muted">Try one of these:</p>
+        <div class="suggestions">
+          @for (s of suggestions; track s) {
+            <button class="btn secondary" (click)="send(s)">{{ s }}</button>
+          }
+        </div>
+      </div>
+    }
+    @if (busy()) {
+      <div class="loading"><span class="spinner"></span> Coach is working… multi-step requests can take a minute.</div>
+    }
+    @if (error()) {
+      <div class="error">{{ error() }}</div>
+    }
+  </div>
+
+  <form class="composer" (submit)="$event.preventDefault(); send()">
+    <textarea
+      [(ngModel)]="draft"
+      name="draft"
+      rows="2"
+      placeholder="Message your coach…  (Enter to send, Shift+Enter for a new line)"
+      (keydown)="onKey($event)"
+      aria-label="Message"
+    ></textarea>
+    <button class="btn" type="submit" [disabled]="busy() || !draft.trim()">Send</button>
+  </form>
+</div>

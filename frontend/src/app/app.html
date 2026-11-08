@@ -1,0 +1,25 @@
+<div class="shell">
+  <aside class="sidebar">
+    <a routerLink="/" class="brand">
+      <span class="logo">AI</span>
+      <span class="brand-text">Learning Coach</span>
+    </a>
+    <nav>
+      @for (item of nav; track item.path) {
+        <a
+          [routerLink]="item.path"
+          routerLinkActive="active"
+          [routerLinkActiveOptions]="{ exact: item.exact }"
+          class="nav-link"
+        >
+          <span class="nav-icon" aria-hidden="true">{{ item.icon }}</span>
+          <span class="nav-label">{{ item.label }}</span>
+        </a>
+      }
+    </nav>
+    <p class="powered">Powered by Claude</p>
+  </aside>
+  <main class="content">
+    <router-outlet />
+  </main>
+</div>

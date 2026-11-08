@@ -10,6 +10,12 @@ AI Engineer in 12 months") and it plans, teaches, assesses, reviews and adapts:
 5. Reviews submitted work and gives feedback
 6. Tracks progress and recommends next steps
 
+![Dashboard](docs/screenshots/dashboard.png)
+
+| Coach chat | Quiz |
+|---|---|
+| ![Coach chat](docs/screenshots/chat.png) | ![Quiz](docs/screenshots/quiz.png) |
+
 ## Architecture
 
 ```
@@ -39,6 +45,14 @@ cp .env.example .env      # then paste your key from https://platform.claude.com
 npm run db:setup          # creates the progress database (data/coach.db)
 npm run ingest            # builds the knowledge index for RAG
 npm run dev               # http://localhost:5000
+```
+
+Then start the web app in a second terminal:
+
+```bash
+cd frontend
+npm install
+npm start                 # http://localhost:4200
 ```
 
 ## API
@@ -133,12 +147,13 @@ powers the dashboard, and the Coach agent's `get_progress` tool lets it target w
 - [x] Phase 9: RAG over `knowledge/` (file vector store, Voyage AI embeddings or keyword fallback)
 - [x] Phase 10: MCP server + calendar and GitHub tools (progress tool comes with Phase 11)
 - [x] Phase 11: Prisma progress tracking (SQLite locally, PostgreSQL at deploy)
-- [ ] Phase 12: Angular dashboard and chat UI
+- [x] Phase 12: Angular frontend (dashboard, coach chat, quiz, review, ask my notes, plan)
 - [ ] Phase 14: Deploy to Azure (App Service, PostgreSQL, Static Web Apps)
 
 ## Project structure
 
 ```
+frontend/          Angular app (see frontend/README.md)
 src/
 ├── agents/        roadmap, project, quiz, interview, review, knowledge, orchestrator
 ├── config/        env + Claude client helpers

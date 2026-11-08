@@ -1,0 +1,24 @@
+.grow { flex: 1 1 200px; }
+.narrow { width: 90px; }
+.pad { margin-top: 16px; }
+.error { margin-top: 16px; }
+.questions { margin-top: 16px; }
+.q { font-weight: 600; margin: 0 0 12px; display: flex; gap: 10px; }
+.qn { flex: none; display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--accent-soft); color: var(--accent-strong); font-size: 13px; }
+.options { display: grid; gap: 8px; }
+.option {
+  font: inherit; text-align: left; display: flex; gap: 10px; align-items: center; padding: 10px 12px;
+  border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--text); cursor: pointer;
+}
+.option:hover:not(:disabled) { background: var(--hover); }
+.option:disabled { cursor: default; }
+.letter { flex: none; width: 22px; font-weight: 700; color: var(--text-muted); }
+.option.selected { border-color: var(--accent); background: var(--accent-soft); }
+.option.correct { border-color: var(--good); background: var(--good-soft); }
+.option.wrong { border-color: var(--bad); background: var(--bad-soft); }
+.explain { margin: 12px 0 0; color: var(--text-muted); }
+.score { margin-top: 16px; border-left: 4px solid var(--bad); }
+.score.pass { border-left-color: var(--good); }
+.score p { margin: 0; }
+.score-value { font-size: 22px; font-weight: 700; }
+.submit { align-self: flex-start; }

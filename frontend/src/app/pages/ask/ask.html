@@ -1,0 +1,24 @@
+<h1>Ask my notes</h1>
+<p class="subtitle">Answers come from the PDFs and notes in your <code>knowledge</code> folder, with citations. Add files, then run <code>npm run ingest</code>.</p>
+
+<form class="card row" (submit)="$event.preventDefault(); run()">
+  <label class="grow">Question <input [(ngModel)]="question" name="question" placeholder="What is the difference between RAG and fine-tuning?" /></label>
+  <button class="btn" type="submit" [disabled]="busy() || !question.trim()">Ask</button>
+</form>
+
+@if (busy()) { <div class="loading pad"><span class="spinner"></span> Searching your notes…</div> }
+@if (error()) { <div class="error pad">{{ error() }}</div> }
+
+@if (result(); as r) {
+  <div class="card pad">
+    <div class="md" [innerHTML]="r.answer | markdown"></div>
+    @if (r.sources.length) {
+      <div class="sources">
+        <p class="muted small">Sources</p>
+        @for (s of r.sources; track s.id) {
+          <span class="chip">[{{ s.id }}] {{ s.ref }}</span>
+        }
+      </div>
+    }
+  </div>
+}
