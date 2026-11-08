@@ -8,15 +8,10 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
-import { RoadmapAgent } from "../agents/roadmap.agent.js";
-import { ProjectAgent } from "../agents/project.agent.js";
-import { QuizAgent } from "../agents/quiz.agent.js";
-import { InterviewAgent } from "../agents/interview.agent.js";
-import { ReviewAgent } from "../agents/review.agent.js";
-import { KnowledgeAgent, formatSources } from "../agents/knowledge.agent.js";
+import { formatSources } from "../agents/knowledge.agent.js";
 import { search } from "../vector/store.js";
-import { scheduleStudyPlan } from "../tools/calendar.tool.js";
-import { reviewGithubRepo } from "../tools/github.tool.js";
+import { CoachService } from "../services/coach.service.js";
+import { ProgressService } from "../services/progress.service.js";
 
 const server = new McpServer({ name: "ai-learning-coach", version: "1.0.0" });
 
@@ -42,7 +37,7 @@ server.registerTool(
     description: "Create a month-by-month learning roadmap with weekly topics, projects, tools and milestones.",
     inputSchema: { skill: z.string(), durationMonths: z.number().int().default(12), currentLevel: z.string().optional() },
   },
-  handler(({ skill, durationMonths, currentLevel }) => RoadmapAgent.generate(skill, durationMonths, currentLevel)),
+  handler(({ skill, durationMonths, currentLevel }) => CoachService.roadmap(skill, durationMonths, currentLevel)),
 );
 
 server.registerTool(
@@ -52,7 +47,7 @@ server.registerTool(
     description: "Design one hands-on project (requirements, dataset, tasks, deliverables, rubric) for what the learner just studied.",
     inputSchema: { learnedSoFar: z.string(), level: z.string().optional() },
   },
-  handler(({ learnedSoFar, level }) => ProjectAgent.generate(learnedSoFar, level)),
+  handler(({ learnedSoFar, level }) => CoachService.project(learnedSoFar, level)),
 );
 
 server.registerTool(
@@ -62,7 +57,7 @@ server.registerTool(
     description: "Generate multiple choice questions with answers and explanations.",
     inputSchema: { topic: z.string(), difficulty: z.string().optional(), count: z.number().int().optional() },
   },
-  handler(({ topic, difficulty, count }) => QuizAgent.generate(topic, difficulty, count)),
+  handler(({ topic, difficulty, count }) => CoachService.quiz(topic, difficulty, count)),
 );
 
 server.registerTool(
@@ -72,7 +67,7 @@ server.registerTool(
     description: "Generate mock interview questions for a role, with what a strong answer covers.",
     inputSchema: { role: z.string().optional(), level: z.string().optional() },
   },
-  handler(({ role, level }) => InterviewAgent.generate(role, level)),
+  handler(({ role, level }) => CoachService.interview(role, level)),
 );
 
 server.registerTool(
@@ -80,9 +75,9 @@ server.registerTool(
   {
     title: "Review submission",
     description: "Review pasted code or written work: strengths, weaknesses, improvements and a score out of 10.",
-    inputSchema: { submission: z.string(), context: z.string().optional() },
+    inputSchema: { submission: z.string(), context: z.string().optional(), projectId: z.string().optional() },
   },
-  handler(({ submission, context }) => ReviewAgent.review(submission, context)),
+  handler(({ submission, context, projectId }) => CoachService.review(submission, context, projectId)),
 );
 
 server.registerTool(
@@ -90,10 +85,10 @@ server.registerTool(
   {
     title: "Review GitHub repo",
     description: "Fetch a public GitHub repository (README + main source files) and review it like a senior engineer, scored out of 10.",
-    inputSchema: { url: z.string().describe("e.g. https://github.com/owner/repo"), context: z.string().optional() },
+    inputSchema: { url: z.string().describe("e.g. https://github.com/owner/repo"), context: z.string().optional(), projectId: z.string().optional() },
     annotations: { readOnlyHint: true, openWorldHint: true },
   },
-  handler(({ url, context }) => reviewGithubRepo(url, context)),
+  handler(({ url, context, projectId }) => CoachService.reviewRepo(url, context, projectId)),
 );
 
 server.registerTool(
@@ -110,7 +105,7 @@ server.registerTool(
       minutesPerSession: z.number().int().optional(),
     },
   },
-  handler((args) => scheduleStudyPlan(args)),
+  handler((args) => CoachService.schedule(args)),
 );
 
 server.registerTool(
@@ -135,7 +130,38 @@ server.registerTool(
     inputSchema: { question: z.string() },
     annotations: { readOnlyHint: true },
   },
-  handler(({ question }) => KnowledgeAgent.ask(question)),
+  handler(({ question }) => CoachService.ask(question)),
+);
+
+server.registerTool(
+  "get_progress",
+  {
+    title: "Learning progress",
+    description: "The learner's current goal, project queue, quiz scores by topic (with weak topics), review ratings and interview count.",
+    inputSchema: {},
+    annotations: { readOnlyHint: true },
+  },
+  handler(() => ProgressService.summary()),
+);
+
+server.registerTool(
+  "submit_quiz_answers",
+  {
+    title: "Submit quiz answers",
+    description: "Grade the learner's answers to a saved quiz (0-based option indexes, in question order) and record the score.",
+    inputSchema: { quizId: z.string(), answers: z.array(z.number().int()) },
+  },
+  handler(({ quizId, answers }) => ProgressService.submitQuiz(quizId, answers)),
+);
+
+server.registerTool(
+  "update_project_status",
+  {
+    title: "Update project status",
+    description: "Move a project through the queue: todo, in_progress, submitted or done.",
+    inputSchema: { projectId: z.string(), status: z.enum(["todo", "in_progress", "submitted", "done"]) },
+  },
+  handler(({ projectId, status }) => ProgressService.setProjectStatus(projectId, status)),
 );
 
 await server.connect(new StdioServerTransport());

@@ -36,6 +36,8 @@ PostgreSQL via Prisma: users, projects, quizzes, submissions, progress (Phase 11
 ```bash
 npm install
 cp .env.example .env      # then paste your key from https://platform.claude.com
+npm run db:setup          # creates the progress database (data/coach.db)
+npm run ingest            # builds the knowledge index for RAG
 npm run dev               # http://localhost:5000
 ```
 
@@ -52,6 +54,9 @@ npm run dev               # http://localhost:5000
 | POST | `/api/coach/schedule` | `{ "goal": "Learn Python", "weeks": 4, "days": ["Mon","Wed","Fri"], "startTime": "19:00" }` returns dated sessions plus an `.ics` file in `data/calendar/` |
 | POST | `/api/coach/review-repo` | `{ "url": "https://github.com/owner/repo" }` reviews a public GitHub repo |
 | POST | `/api/coach/ask` | `{ "question": "What is the difference between RAG and fine-tuning?" }` returns an answer with citations from `knowledge/` |
+| GET | `/api/progress` | Dashboard data: current goal, project queue, quiz scores by topic, weak topics, review ratings |
+| POST | `/api/progress/quiz/:quizId/submit` | `{ "answers": [1, 0, 2] }` grades a saved quiz (0-based option indexes) and records the score |
+| PATCH | `/api/progress/projects/:projectId` | `{ "status": "in_progress" }` (todo, in_progress, submitted, done) |
 | POST | `/api/coach/chat` | `{ "messages": [{ "role": "user", "content": "Teach me AI Engineering" }] }` returns `{ "reply": "..." }`. To continue, send the history back with `{ "role": "assistant", "content": reply }` appended. |
 
 Try it:
@@ -107,6 +112,18 @@ The server reads `.env` from the project folder, so no keys go in the config.
 
 The tools live in `src/tools/` and are shared by the MCP server, the REST API and the Coach agent.
 
+## Progress tracking (Phase 11)
+
+Every roadmap, project, quiz, interview and review is saved through Prisma, whether it came
+from the REST API, the Coach agent or the MCP server. Quizzes come back with a `quizId`; submit
+answers to `/api/progress/quiz/:quizId/submit` and the server grades them. `GET /api/progress`
+powers the dashboard, and the Coach agent's `get_progress` tool lets it target weak topics.
+
+- Database: SQLite file `data/coach.db` locally, so there's nothing to install. For Azure PostgreSQL,
+  set `provider = "postgresql"` in `prisma/schema.prisma` and point `DATABASE_URL` at it.
+- `npm run db:studio` opens Prisma Studio to browse your data.
+- After pulling schema changes, run `npm run db:setup` again.
+
 ## Build plan
 
 - [x] Phase 1–2: TypeScript backend and folder structure
@@ -115,7 +132,7 @@ The tools live in `src/tools/` and are shared by the MCP server, the REST API an
 - [x] Phase 13 (first version): orchestrator agent that chains the specialists
 - [x] Phase 9: RAG over `knowledge/` (file vector store, Voyage AI embeddings or keyword fallback)
 - [x] Phase 10: MCP server + calendar and GitHub tools (progress tool comes with Phase 11)
-- [ ] Phase 11: Prisma + PostgreSQL progress tracking
+- [x] Phase 11: Prisma progress tracking (SQLite locally, PostgreSQL at deploy)
 - [ ] Phase 12: Angular dashboard and chat UI
 - [ ] Phase 14: Deploy to Azure (App Service, PostgreSQL, Static Web Apps)
 
@@ -127,7 +144,9 @@ src/
 ├── config/        env + Claude client helpers
 ├── controllers/   request validation + responses
 ├── routes/        /api/coach/*
-├── services/      thin layer the controllers call
+├── services/      CoachService (agent + save) and ProgressService (database + analytics)
+├── db/            Prisma client
+├── generated/     Prisma client code (generated, git-ignored)
 ├── mcp/           MCP server (stdio) exposing the coach's tools
 ├── tools/         calendar (.ics) and GitHub review tools
 ├── types/         Zod schemas for structured outputs
@@ -135,6 +154,7 @@ src/
 ├── vector/        loader, chunker, embeddings, store
 ├── app.ts
 └── server.ts
+prisma/            schema.prisma and migrations
 knowledge/         PDFs and notes for RAG; run `npm run ingest` after changes
 data/              generated index (git-ignored)
 ```
