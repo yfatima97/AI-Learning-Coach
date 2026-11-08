@@ -5,14 +5,16 @@
   "main": "dist/server.js",
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "build": "tsc",
-    "start": "node dist/server.js",
+    "build": "tsc && npm run build:web && npm run ingest",
+    "start": "node scripts/start.mjs",
     "typecheck": "tsc --noEmit",
     "ingest": "tsx src/scripts/ingest.ts",
     "mcp": "tsx src/mcp/server.ts",
     "postinstall": "prisma generate",
     "db:setup": "prisma migrate deploy && prisma generate",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "build:api": "tsc",
+    "build:web": "node scripts/build-web.mjs"
   },
   "keywords": [],
   "author": "",
@@ -37,5 +39,8 @@
     "tsx": "^4.23.15",
     "typescript": "^7.0.2"
   },
-  "type": "module"
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  }
 }

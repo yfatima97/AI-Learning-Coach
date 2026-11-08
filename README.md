@@ -167,6 +167,19 @@ curl -N -X POST localhost:5000/api/coach/workflow -H "content-type: application/
   -d '{"goal":"Teach me AI Engineering"}'
 ```
 
+## Deploy (Phase 14)
+
+The API and the Angular website deploy together as one Azure App Service. GitHub Actions
+builds on every push to `main`. Set `APP_PASSWORD` so only you can use the online app.
+Step-by-step guide: [docs/DEPLOY.md](docs/DEPLOY.md).
+
+To run the production build locally:
+
+```bash
+npm run build      # API + website + knowledge index
+npm start          # runs migrations, then serves everything on http://localhost:5000
+```
+
 ## Build plan
 
 - [x] Phase 1–2: TypeScript backend and folder structure
@@ -177,7 +190,7 @@ curl -N -X POST localhost:5000/api/coach/workflow -H "content-type: application/
 - [x] Phase 11: Prisma progress tracking (SQLite locally, PostgreSQL at deploy)
 - [x] Phase 12: Angular frontend (dashboard, coach chat, quiz, review, ask my notes, plan)
 - [x] Phase 13: agent workflow (Roadmap → Project + Quiz in parallel → Review → Progress) with a live Learning path page
-- [ ] Phase 14: Deploy to Azure (App Service, PostgreSQL, Static Web Apps)
+- [x] Phase 14: Deploy to Azure (one App Service for API + website, SQLite on persistent storage; PostgreSQL optional)
 
 ## Project structure
 
