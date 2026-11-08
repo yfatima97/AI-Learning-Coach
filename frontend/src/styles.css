@@ -1,5 +1,5 @@
 :root {
-  --bg: #f6f7f9;
+  --bg: #f5f6fa;
   --surface: #ffffff;
   --surface-2: #f1f3f6;
   --border: #e3e6eb;
@@ -16,7 +16,9 @@
   --warn-soft: #fef3c7;
   --bad: #b91c1c;
   --bad-soft: #fee2e2;
-  --radius: 12px;
+  --radius: 14px;
+  --shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 1px 3px rgba(16, 24, 40, 0.06);
+  --shadow-lg: 0 10px 30px -12px rgba(67, 56, 202, 0.35);
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
@@ -45,14 +47,14 @@
 html, body { margin: 0; }
 body {
   background: var(--bg); color: var(--text);
-  font: 15px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font: 15px/1.55 "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
-h1 { font-size: 26px; line-height: 1.2; margin: 0 0 6px; letter-spacing: -0.01em; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0 0 6px; letter-spacing: -0.02em; font-weight: 700; }
 h2 { font-size: 17px; margin: 0 0 12px; }
 .subtitle { color: var(--text-muted); margin: 0 0 24px; }
 
-.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); }
 .grid { display: grid; gap: 16px; }
 .stack { display: flex; flex-direction: column; gap: 16px; }
 .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: end; }

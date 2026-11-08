@@ -1,91 +1,159 @@
-<h1>Dashboard</h1>
-<p class="subtitle">Your learning progress at a glance.</p>
-
 @if (error()) {
   <div class="error">{{ error() }}</div>
 } @else if (!progress()) {
   <div class="loading"><span class="spinner"></span> Loading your progress…</div>
 } @else {
   @let p = progress()!;
-  <section class="card goal">
-    @if (p.currentGoal) {
-      <div>
-        <p class="muted small">Current goal</p>
-        <h2 class="goal-title">{{ p.currentGoal.skill }}</h2>
-        <p class="muted small">{{ p.currentGoal.durationMonths }}-month plan · started {{ p.currentGoal.startedAt.slice(0, 10) }}</p>
-      </div>
-      <a routerLink="/chat" class="btn">Ask the coach what's next</a>
-    } @else {
-      <div>
-        <h2 class="goal-title">Set your first goal</h2>
-        <p class="muted small">Create a roadmap and the coach will track your progress against it.</p>
-      </div>
-      <a routerLink="/plan" class="btn">Create a roadmap</a>
-    }
+
+  <section class="hero">
+    <div class="hero-text">
+      <p class="eyebrow">{{ today }}</p>
+      <h1>{{ greeting }} 👋</h1>
+      @if (p.currentGoal) {
+        <p class="hero-sub">You're working toward <strong>{{ p.currentGoal.skill }}</strong> on a {{ p.currentGoal.durationMonths }}-month plan, started {{ p.currentGoal.startedAt.slice(0, 10) }}.</p>
+        <div class="hero-actions">
+          <a routerLink="/chat" class="btn light">Ask the coach what's next</a>
+          <a routerLink="/plan" class="btn ghost">View plan</a>
+        </div>
+      } @else {
+        <p class="hero-sub">Set your first goal and your coach will build a roadmap and track your progress against it.</p>
+        <div class="hero-actions">
+          <a routerLink="/plan" class="btn light">Create a roadmap</a>
+          <a routerLink="/chat" class="btn ghost">Talk to the coach</a>
+        </div>
+      }
+    </div>
+    <div class="hero-art" aria-hidden="true">
+      <svg viewBox="0 0 24 24"><path [attr.d]="icons.target" /></svg>
+    </div>
   </section>
 
-  <section class="grid stats">
+  <section class="stats">
     <div class="card stat">
-      <p class="muted small">Projects done</p>
-      <p class="stat-value">{{ p.projects.completionPercent }}%</p>
+      <div class="stat-top">
+        <span class="stat-icon indigo"><svg viewBox="0 0 24 24"><path [attr.d]="icons.folder" /></svg></span>
+        <span class="stat-label">Projects done</span>
+      </div>
+      <p class="stat-value">{{ p.projects.completionPercent }}<span>%</span></p>
       <div class="bar"><span [style.width.%]="p.projects.completionPercent"></span></div>
-      <p class="muted small">{{ p.projects.done }} of {{ p.projects.total }}</p>
+      <p class="stat-sub">{{ p.projects.done }} of {{ p.projects.total }} completed</p>
     </div>
     <div class="card stat">
-      <p class="muted small">Quiz average</p>
-      <p class="stat-value">{{ p.quizzes.averagePercent ?? '–' }}{{ p.quizzes.averagePercent !== null ? '%' : '' }}</p>
-      <p class="muted small">{{ p.quizzes.attempts }} attempt{{ p.quizzes.attempts === 1 ? '' : 's' }}</p>
+      <div class="stat-top">
+        <span class="stat-icon emerald"><svg viewBox="0 0 24 24"><path [attr.d]="icons.quiz" /></svg></span>
+        <span class="stat-label">Quiz average</span>
+      </div>
+      <div class="ring-row">
+        <svg class="ring" [class]="'ring ' + scoreClass(p.quizzes.averagePercent)" viewBox="0 0 80 80" role="img"
+             [attr.aria-label]="'Quiz average ' + (p.quizzes.averagePercent ?? 0) + ' percent'">
+          <circle class="ring-track" cx="40" cy="40" r="34" />
+          <circle class="ring-fill" cx="40" cy="40" r="34"
+                  [attr.stroke-dasharray]="ringCircumference"
+                  [attr.stroke-dashoffset]="ringOffset(p.quizzes.averagePercent)" />
+          <text x="40" y="45" text-anchor="middle">{{ p.quizzes.averagePercent ?? '–' }}{{ p.quizzes.averagePercent !== null ? '%' : '' }}</text>
+        </svg>
+        <p class="stat-sub">{{ p.quizzes.attempts }} attempt{{ p.quizzes.attempts === 1 ? '' : 's' }}<br />across {{ p.quizzes.byTopic.length }} topic{{ p.quizzes.byTopic.length === 1 ? '' : 's' }}</p>
+      </div>
     </div>
     <div class="card stat">
-      <p class="muted small">Review rating</p>
-      <p class="stat-value">{{ p.reviews.averageRating ?? '–' }}{{ p.reviews.averageRating !== null ? '/10' : '' }}</p>
-      <p class="muted small">{{ p.reviews.count }} review{{ p.reviews.count === 1 ? '' : 's' }}</p>
+      <div class="stat-top">
+        <span class="stat-icon amber"><svg viewBox="0 0 24 24"><path [attr.d]="icons.star" /></svg></span>
+        <span class="stat-label">Review rating</span>
+      </div>
+      <p class="stat-value">{{ p.reviews.averageRating ?? '–' }}@if (p.reviews.averageRating !== null) {<span>/10</span>}</p>
+      <p class="stat-sub">{{ p.reviews.count }} code review{{ p.reviews.count === 1 ? '' : 's' }}</p>
     </div>
     <div class="card stat">
-      <p class="muted small">Mock interviews</p>
+      <div class="stat-top">
+        <span class="stat-icon rose"><svg viewBox="0 0 24 24"><path [attr.d]="icons.mic" /></svg></span>
+        <span class="stat-label">Mock interviews</span>
+      </div>
       <p class="stat-value">{{ p.mockInterviews }}</p>
-      <p class="muted small">practised</p>
+      <p class="stat-sub">practised so far</p>
     </div>
   </section>
 
-  <section class="grid two">
-    <div class="card">
-      <h2>Project queue</h2>
-      @for (proj of p.projects.queue; track proj.id) {
-        <div class="queue-item">
-          <span class="queue-title">{{ proj.title }}</span>
-          <select (change)="setStatus(proj.id, $any($event.target).value)" [attr.aria-label]="'Status of ' + proj.title">
-            @for (s of statuses; track s) {
-              <option [value]="s" [selected]="s === proj.status">{{ statusLabel[s] }}</option>
-            }
-          </select>
+  <section class="layout">
+    <div class="col-main">
+      @if (nextStep(); as n) {
+        <div class="card next">
+          <span class="next-icon"><svg viewBox="0 0 24 24"><path [attr.d]="icons.spark" /></svg></span>
+          <div class="next-text">
+            <p class="eyebrow accent">Recommended next step</p>
+            <h2>{{ n.title }}</h2>
+            <p class="muted">{{ n.detail }}</p>
+          </div>
+          <a [routerLink]="n.link" class="btn">{{ n.cta }}
+            <svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true"><path [attr.d]="icons.arrow" /></svg>
+          </a>
         </div>
-      } @empty {
-        <p class="muted small">No open projects. <a routerLink="/plan">Generate one</a> for what you're learning.</p>
       }
+
+      <div class="card">
+        <div class="card-head">
+          <h2>Quiz performance</h2>
+          <a routerLink="/quiz" class="link">New quiz</a>
+        </div>
+        @for (t of p.quizzes.byTopic; track t.topic) {
+          <div class="topic">
+            <div class="topic-head">
+              <span class="topic-name">{{ t.topic }}</span>
+              <span class="muted small">{{ t.attempts }} attempt{{ t.attempts === 1 ? '' : 's' }}</span>
+              <span class="chip" [class]="'chip ' + scoreClass(t.averagePercent)">{{ t.averagePercent }}%</span>
+            </div>
+            <div class="bar thick" [class]="'bar thick ' + scoreClass(t.averagePercent)"><span [style.width.%]="t.averagePercent"></span></div>
+          </div>
+        } @empty {
+          <div class="empty">
+            <svg viewBox="0 0 24 24"><path [attr.d]="icons.trend" /></svg>
+            <p>No quiz attempts yet. <a routerLink="/quiz">Take your first quiz</a> to see results here.</p>
+          </div>
+        }
+        @if (p.quizzes.weakTopics.length) {
+          <p class="weak small">
+            Focus next on:
+            @for (w of p.quizzes.weakTopics; track w) {
+              <span class="chip bad">{{ w }}</span>
+            }
+          </p>
+        }
+      </div>
     </div>
 
-    <div class="card">
-      <h2>Quiz results by topic</h2>
-      @for (t of p.quizzes.byTopic; track t.topic) {
-        <div class="topic">
-          <div class="topic-head">
-            <span>{{ t.topic }}</span>
-            <span class="chip" [class]="'chip ' + scoreClass(t.averagePercent)">{{ t.averagePercent }}%</span>
-          </div>
-          <div class="bar" [class]="'bar ' + scoreClass(t.averagePercent)"><span [style.width.%]="t.averagePercent"></span></div>
-        </div>
-      } @empty {
-        <p class="muted small">No quiz attempts yet. <a routerLink="/quiz">Take a quiz</a>.</p>
-      }
-      @if (p.quizzes.weakTopics.length) {
-        <p class="weak small">
-          Focus next on:
-          @for (w of p.quizzes.weakTopics; track w) {
-            <span class="chip bad">{{ w }}</span>
+    <div class="col-side">
+      <div class="card">
+        <h2>Quick actions</h2>
+        <div class="actions">
+          @for (a of actions; track a.link) {
+            <a [routerLink]="a.link" class="action">
+              <span class="stat-icon" [class]="'stat-icon ' + a.tone"><svg viewBox="0 0 24 24"><path [attr.d]="icons[a.icon]" /></svg></span>
+              <span class="action-text"><strong>{{ a.label }}</strong><span>{{ a.detail }}</span></span>
+            </a>
           }
-        </p>
-      }
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h2>Project queue</h2>
+          <a routerLink="/plan" class="link">New project</a>
+        </div>
+        @for (proj of p.projects.queue; track proj.id) {
+          <div class="queue-item">
+            <span class="queue-title">{{ proj.title }}</span>
+            <select [class]="'status ' + proj.status" (change)="setStatus(proj.id, $any($event.target).value)" [attr.aria-label]="'Status of ' + proj.title">
+              @for (s of statuses; track s) {
+                <option [value]="s" [selected]="s === proj.status">{{ statusLabel[s] }}</option>
+              }
+            </select>
+          </div>
+        } @empty {
+          <div class="empty">
+            <svg viewBox="0 0 24 24"><path [attr.d]="icons.folder" /></svg>
+            <p>No open projects. <a routerLink="/plan">Generate one</a> for what you're learning.</p>
+          </div>
+        }
+      </div>
     </div>
   </section>
 }
