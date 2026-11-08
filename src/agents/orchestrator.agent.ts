@@ -9,12 +9,14 @@ import { InterviewAgent } from "./interview.agent.js";
 import { ReviewAgent } from "./review.agent.js";
 import { formatSources } from "./knowledge.agent.js";
 import { search } from "../vector/store.js";
+import { scheduleStudyPlan } from "../tools/calendar.tool.js";
+import { reviewGithubRepo } from "../tools/github.tool.js";
 
 /**
  * The Coach (orchestrator) is itself a Claude agent. Each specialist agent is
  * exposed to it as a tool, and Claude decides which ones to call and in what
  * order to reach the learner's goal (Phase 13: agent workflow).
- * Phase 9 added knowledge-base search; later phases add calendar and progress tools.
+ * Phase 9 added knowledge-base search; Phase 10 added GitHub review and calendar tools.
  */
 const tools = [
   betaZodTool({
@@ -66,11 +68,30 @@ const tools = [
     inputSchema: z.object({ submission: z.string(), context: z.string().optional() }),
     run: async ({ submission, context }) => JSON.stringify(await ReviewAgent.review(submission, context)),
   }),
+  betaZodTool({
+    name: "review_github_repo",
+    description: "Fetch a public GitHub repo (README + main source files) and review it, scored out of 10.",
+    inputSchema: z.object({ url: z.string(), context: z.string().optional() }),
+    run: async ({ url, context }) => JSON.stringify(await reviewGithubRepo(url, context)),
+  }),
+  betaZodTool({
+    name: "schedule_study_plan",
+    description: "Plan dated study sessions for a goal and save them as an .ics calendar file.",
+    inputSchema: z.object({
+      goal: z.string(),
+      weeks: z.number().int().optional(),
+      days: z.array(z.enum(["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"])).optional(),
+      startDate: z.string().optional().describe("YYYY-MM-DD"),
+      startTime: z.string().optional().describe("HH:MM 24h"),
+      minutesPerSession: z.number().int().optional(),
+    }),
+    run: async (args) => JSON.stringify(await scheduleStudyPlan(args)),
+  }),
 ];
 
 const SYSTEM = `You are an AI Learning Coach. Help the learner reach their goal by
 planning, teaching, assessing and reviewing. Use your tools to search their study materials, create roadmaps,
-projects, quizzes, mock interviews and reviews; call only the tools the request
+projects, quizzes, mock interviews, reviews (including GitHub repos) and calendar study schedules; call only the tools the request
 needs. Finish with a short, friendly summary and the single best next step.`;
 
 export class CoachOrchestrator {
