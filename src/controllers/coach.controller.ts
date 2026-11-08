@@ -67,6 +67,9 @@ export const CoachController = {
     res.flushHeaders();
     const send = (e: WorkflowEvent | { type: "steps"; steps: typeof STEPS }) => res.write(JSON.stringify(e) + "\n");
     send({ type: "steps", steps: STEPS });
+    // Heartbeat: hosts like Azure App Service drop connections that stay silent for
+    // about 4 minutes, and the roadmap step alone can take 2 or 3.
+    const heartbeat = setInterval(() => res.write('{"type":"ping"}\n'), 15_000);
     try {
       await runLearningWorkflow(String(goal), send, {
         durationMonths: durationMonths ? Number(durationMonths) : undefined,
@@ -74,6 +77,8 @@ export const CoachController = {
       });
     } catch (err) {
       send({ type: "error", message: err instanceof Error ? err.message : String(err) });
+    } finally {
+      clearInterval(heartbeat);
     }
     res.end();
   }),

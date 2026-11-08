@@ -68,7 +68,8 @@ export type WorkflowEvent =
   | { type: 'steps'; steps: WorkflowStep[] }
   | { type: 'step'; step: StepId; status: 'running' | 'done' | 'error'; summary?: string; data?: any }
   | { type: 'complete'; result: WorkflowResult }
-  | { type: 'error'; message: string };
+  | { type: 'error'; message: string }
+  | { type: 'ping' };
 
 export interface ChatMessage {
   role: 'user' | 'assistant';
