@@ -40,6 +40,12 @@ export const ProgressService = {
     });
   },
 
+  async getQuiz(id: string) {
+    const quiz = await prisma.quiz.findUnique({ where: { id } });
+    if (!quiz) throw Object.assign(new Error("Quiz not found"), { status: 404 });
+    return { quizId: quiz.id, topic: quiz.topic, difficulty: quiz.difficulty, questions: quiz.questions as Quiz["questions"] };
+  },
+
   /** Grade a quiz attempt on the server, so scores can be trusted for progress tracking. */
   async submitQuiz(quizId: string, answers: number[]) {
     const quiz = await prisma.quiz.findUnique({ where: { id: quizId } });

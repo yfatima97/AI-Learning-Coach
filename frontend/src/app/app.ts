@@ -16,6 +16,10 @@ export const ICONS = {
   mic: 'M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3zM19 10v2a7 7 0 0 1-14 0v-2M12 19v3',
   arrow: 'M5 12h14M13 6l6 6-6 6',
   trend: 'M22 7l-8.5 8.5-5-5L2 17M16 7h6v6',
+  route: 'M6 21a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM18 9a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM9 18h6.5a3.5 3.5 0 0 0 0-7h-7a3.5 3.5 0 0 1 0-7H15',
+  check: 'M20 6L9 17l-5-5',
+  alert: 'M12 9v4M12 17h.01M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z',
+  user: 'M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z',
 } as const;
 export type IconName = keyof typeof ICONS;
 
@@ -29,6 +33,7 @@ export class App {
   protected readonly icons = ICONS;
   protected readonly nav: { path: string; label: string; icon: IconName; exact: boolean }[] = [
     { path: '/', label: 'Dashboard', icon: 'dashboard', exact: true },
+    { path: '/path', label: 'Learning path', icon: 'route', exact: false },
     { path: '/chat', label: 'Coach', icon: 'coach', exact: false },
     { path: '/plan', label: 'Plan', icon: 'plan', exact: false },
     { path: '/quiz', label: 'Quiz', icon: 'quiz', exact: false },

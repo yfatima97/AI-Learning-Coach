@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 
 export const routes: Routes = [
   { path: '', title: 'Dashboard · AI Learning Coach', loadComponent: () => import('./pages/dashboard/dashboard').then((m) => m.Dashboard) },
+  { path: 'path', title: 'Learning path · AI Learning Coach', loadComponent: () => import('./pages/path/path').then((m) => m.LearningPath) },
   { path: 'chat', title: 'Coach · AI Learning Coach', loadComponent: () => import('./pages/chat/chat').then((m) => m.Chat) },
   { path: 'quiz', title: 'Quiz · AI Learning Coach', loadComponent: () => import('./pages/quiz/quiz').then((m) => m.QuizPage) },
   { path: 'review', title: 'Review · AI Learning Coach', loadComponent: () => import('./pages/review/review').then((m) => m.ReviewPage) },

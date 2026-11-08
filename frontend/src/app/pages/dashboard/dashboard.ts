@@ -29,17 +29,19 @@ export class Dashboard implements OnInit {
   protected readonly today = new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
 
   protected readonly actions: { label: string; detail: string; icon: IconName; link: string; tone: string }[] = [
-    { label: 'Chat with coach', detail: 'Plan your week', icon: 'coach', link: '/chat', tone: 'indigo' },
+    { label: 'Learning path', detail: 'Start a new goal', icon: 'route', link: '/path', tone: 'indigo' },
+    { label: 'Chat with coach', detail: 'Plan your week', icon: 'coach', link: '/chat', tone: 'violet' },
     { label: 'Take a quiz', detail: 'Test a topic', icon: 'quiz', link: '/quiz', tone: 'emerald' },
     { label: 'Review my code', detail: 'Paste code or a repo', icon: 'review', link: '/review', tone: 'amber' },
     { label: 'Ask my notes', detail: 'Search your docs', icon: 'notes', link: '/ask', tone: 'rose' },
+    { label: 'Plan & projects', detail: 'Roadmap or project', icon: 'plan', link: '/plan', tone: 'sky' },
   ];
 
   protected readonly nextStep = computed<NextStep | null>(() => {
     const p = this.progress();
     if (!p) return null;
     if (!p.currentGoal)
-      return { title: 'Set a learning goal', detail: 'A roadmap gives the coach something to track your progress against.', cta: 'Create a roadmap', link: '/plan' };
+      return { title: 'Start a learning path', detail: 'Tell the coach what you want to learn. Its agents build a roadmap, a starter project and a quiz for you.', cta: 'Start now', link: '/path' };
     if (p.quizzes.weakTopics.length)
       return { title: `Strengthen ${p.quizzes.weakTopics[0]}`, detail: 'Your quiz average here is under 70%. Another short quiz will lock it in.', cta: 'Retake quiz', link: '/quiz' };
     if (!p.projects.queue.length)

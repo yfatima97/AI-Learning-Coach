@@ -16,6 +16,8 @@ AI Engineer in 12 months") and it plans, teaches, assesses, reviews and adapts:
 |---|---|
 | ![Coach chat](docs/screenshots/chat.png) | ![Quiz](docs/screenshots/quiz.png) |
 
+![Learning path: agents working together](docs/screenshots/learning-path.png)
+
 ## Architecture
 
 ```
@@ -34,8 +36,9 @@ PostgreSQL via Prisma: users, projects, quizzes, submissions, progress (Phase 11
 
 - **LLM:** Claude (`claude-opus-5-5` by default, set `CLAUDE_MODEL` to change) via `@anthropic-ai/sdk`.
 - **Structured outputs:** quizzes, reviews and interviews come back as JSON validated by Zod.
-- **Agent workflow:** `/api/coach/chat` uses the SDK tool runner, so Claude decides which
-  specialist agents to call to reach the learner's goal.
+- **Agent workflow (Phase 13):** "Teach me AI Engineering" runs the specialist agents as one
+  pipeline (see [Agent workflow](#agent-workflow-phase-13)). `/api/coach/chat` uses the SDK tool
+  runner, so Claude can also decide which agents to call, including starting that pipeline.
 
 ## Getting started
 
@@ -71,6 +74,8 @@ npm start                 # http://localhost:4200
 | GET | `/api/progress` | Dashboard data: current goal, project queue, quiz scores by topic, weak topics, review ratings |
 | POST | `/api/progress/quiz/:quizId/submit` | `{ "answers": [1, 0, 2] }` grades a saved quiz (0-based option indexes) and records the score |
 | PATCH | `/api/progress/projects/:projectId` | `{ "status": "in_progress" }` (todo, in_progress, submitted, done) |
+| POST | `/api/coach/workflow` | `{ "goal": "Teach me AI Engineering", "durationMonths": 6, "level": "beginner" }` (months and level optional). Runs the full agent workflow and streams one JSON event per line. |
+| GET | `/api/progress/quiz/:quizId` | A saved quiz (used to open the learning path's quiz) |
 | POST | `/api/coach/chat` | `{ "messages": [{ "role": "user", "content": "Teach me AI Engineering" }] }` returns `{ "reply": "..." }`. To continue, send the history back with `{ "role": "assistant", "content": reply }` appended. |
 
 Try it:
@@ -138,16 +143,40 @@ powers the dashboard, and the Coach agent's `get_progress` tool lets it target w
 - `npm run db:studio` opens Prisma Studio to browse your data.
 - After pulling schema changes, run `npm run db:setup` again.
 
+## Agent workflow (Phase 13)
+
+When the learner says something like "Teach me AI Engineering", specialist agents collaborate
+and hand their results to each other (`src/workflows/learning.workflow.ts`):
+
+```
+Intake ─▶ Roadmap Agent ─▶ ┬─ Project Agent ─┬─▶ Review Agent ─▶ Progress update
+                           └─ Quiz Agent ────┘
+```
+
+1. **Intake** turns the request into a goal, plan length and level (structured output).
+2. **Roadmap Agent** writes the plan (saved as the current goal); a planner picks month 1's focus.
+3. **Project Agent** and **Quiz Agent** both build on month 1, so they run in parallel.
+4. **Review Agent** checks the starter project fits the learner's level and adds tips.
+5. **Progress update** reloads the dashboard data.
+
+Run it from the **Learning path** page (live step-by-step view), `POST /api/coach/workflow`, the
+Coach chat (its `start_learning_path` tool), or MCP (`start_learning_path`).
+
+```bash
+curl -N -X POST localhost:5000/api/coach/workflow -H "content-type: application/json" \
+  -d '{"goal":"Teach me AI Engineering"}'
+```
+
 ## Build plan
 
 - [x] Phase 1–2: TypeScript backend and folder structure
 - [x] Phase 3: Claude integration
 - [x] Phases 4–8: Roadmap, Project, Quiz, Interview and Review agents
-- [x] Phase 13 (first version): orchestrator agent that chains the specialists
 - [x] Phase 9: RAG over `knowledge/` (file vector store, Voyage AI embeddings or keyword fallback)
 - [x] Phase 10: MCP server + calendar and GitHub tools (progress tool comes with Phase 11)
 - [x] Phase 11: Prisma progress tracking (SQLite locally, PostgreSQL at deploy)
 - [x] Phase 12: Angular frontend (dashboard, coach chat, quiz, review, ask my notes, plan)
+- [x] Phase 13: agent workflow (Roadmap → Project + Quiz in parallel → Review → Progress) with a live Learning path page
 - [ ] Phase 14: Deploy to Azure (App Service, PostgreSQL, Static Web Apps)
 
 ## Project structure
@@ -164,6 +193,7 @@ src/
 ├── generated/     Prisma client code (generated, git-ignored)
 ├── mcp/           MCP server (stdio) exposing the coach's tools
 ├── tools/         calendar (.ics) and GitHub review tools
+├── workflows/     Phase 13 learning workflow (multi-agent pipeline)
 ├── types/         Zod schemas for structured outputs
 ├── scripts/       ingest.ts (builds the RAG index)
 ├── vector/        loader, chunker, embeddings, store
