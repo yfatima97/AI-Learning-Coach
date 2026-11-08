@@ -49,6 +49,8 @@ npm run dev               # http://localhost:5000
 | POST | `/api/coach/quiz` | `{ "topic": "Machine Learning", "difficulty": "beginner", "count": 10 }` |
 | POST | `/api/coach/interview` | `{ "role": "AI Engineer", "level": "junior" }` |
 | POST | `/api/coach/review` | `{ "submission": "<code or text>", "context": "optional assignment" }` |
+| POST | `/api/coach/schedule` | `{ "goal": "Learn Python", "weeks": 4, "days": ["Mon","Wed","Fri"], "startTime": "19:00" }` returns dated sessions plus an `.ics` file in `data/calendar/` |
+| POST | `/api/coach/review-repo` | `{ "url": "https://github.com/owner/repo" }` reviews a public GitHub repo |
 | POST | `/api/coach/ask` | `{ "question": "What is the difference between RAG and fine-tuning?" }` returns an answer with citations from `knowledge/` |
 | POST | `/api/coach/chat` | `{ "messages": [{ "role": "user", "content": "Teach me AI Engineering" }] }` returns `{ "reply": "..." }`. To continue, send the history back with `{ "role": "assistant", "content": reply }` appended. |
 
@@ -75,6 +77,36 @@ in `.env`, then re-run ingest). Without a key it falls back to keyword search (B
 with zero setup. The store is a JSON file, which is fine for a personal library; swap it for
 ChromaDB or pgvector at deploy time by reimplementing `src/vector/store.ts`.
 
+## MCP server (Phase 10)
+
+The coach is also an **MCP server**, so any MCP client (Claude Desktop, Claude Code, IDEs) can use
+its tools: `create_roadmap`, `create_project`, `create_quiz`, `create_mock_interview`,
+`review_submission`, `review_github_repo`, `schedule_study_plan`, `search_knowledge_base`,
+`ask_knowledge_base`.
+
+**Claude Desktop (Windows):** Settings → Developer → Edit Config, then add (adjust the path):
+
+```json
+{
+  "mcpServers": {
+    "ai-learning-coach": {
+      "command": "node",
+      "args": [
+        "C:\\Users\\YOU\\AI-Learning-Coach\\node_modules\\tsx\\dist\\cli.mjs",
+        "C:\\Users\\YOU\\AI-Learning-Coach\\src\\mcp\\server.ts"
+      ]
+    }
+  }
+}
+```
+
+Restart Claude Desktop and ask "Use the learning coach to schedule a 4-week Python study plan".
+The server reads `.env` from the project folder, so no keys go in the config.
+
+**Claude Code:** `claude mcp add ai-learning-coach -- npm --prefix /path/to/AI-Learning-Coach run -s mcp`
+
+The tools live in `src/tools/` and are shared by the MCP server, the REST API and the Coach agent.
+
 ## Build plan
 
 - [x] Phase 1–2: TypeScript backend and folder structure
@@ -82,7 +114,7 @@ ChromaDB or pgvector at deploy time by reimplementing `src/vector/store.ts`.
 - [x] Phases 4–8: Roadmap, Project, Quiz, Interview and Review agents
 - [x] Phase 13 (first version): orchestrator agent that chains the specialists
 - [x] Phase 9: RAG over `knowledge/` (file vector store, Voyage AI embeddings or keyword fallback)
-- [ ] Phase 10: MCP tools (calendar, GitHub, progress)
+- [x] Phase 10: MCP server + calendar and GitHub tools (progress tool comes with Phase 11)
 - [ ] Phase 11: Prisma + PostgreSQL progress tracking
 - [ ] Phase 12: Angular dashboard and chat UI
 - [ ] Phase 14: Deploy to Azure (App Service, PostgreSQL, Static Web Apps)
@@ -96,7 +128,8 @@ src/
 ├── controllers/   request validation + responses
 ├── routes/        /api/coach/*
 ├── services/      thin layer the controllers call
-├── tools/         MCP tools (Phase 10)
+├── mcp/           MCP server (stdio) exposing the coach's tools
+├── tools/         calendar (.ics) and GitHub review tools
 ├── types/         Zod schemas for structured outputs
 ├── scripts/       ingest.ts (builds the RAG index)
 ├── vector/        loader, chunker, embeddings, store

@@ -1,5 +1,7 @@
 import type { Request, Response, NextFunction } from "express";
 import { CoachService } from "../services/coach.service.js";
+import { scheduleStudyPlan } from "../tools/calendar.tool.js";
+import { reviewGithubRepo } from "../tools/github.tool.js";
 
 type Handler = (req: Request, res: Response) => Promise<unknown>;
 const wrap = (fn: Handler) => (req: Request, res: Response, next: NextFunction) => fn(req, res).catch(next);
@@ -34,6 +36,14 @@ export const CoachController = {
   review: wrap(async (req, res) => {
     required(req.body, "submission");
     res.json(await CoachService.review(req.body.submission, req.body.context));
+  }),
+  schedule: wrap(async (req, res) => {
+    required(req.body, "goal");
+    res.json(await scheduleStudyPlan(req.body));
+  }),
+  reviewRepo: wrap(async (req, res) => {
+    required(req.body, "url");
+    res.json(await reviewGithubRepo(req.body.url, req.body.context));
   }),
   ask: wrap(async (req, res) => {
     required(req.body, "question");
