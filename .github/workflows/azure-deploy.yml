@@ -1,0 +1,60 @@
+# Phase 14: build the coach and deploy it to Azure App Service (works on the Free F1 plan).
+#
+# One-time setup (see docs/DEPLOY.md):
+#   - Repository variable  AZURE_WEBAPP_NAME             = your Web App's name
+#   - Repository secret    AZURE_WEBAPP_PUBLISH_PROFILE  = contents of the downloaded .PublishSettings file
+# Until AZURE_WEBAPP_NAME is set, the workflow only builds (so it never fails on a fresh repo).
+name: Deploy to Azure
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Build API, website and knowledge index
+        run: npm run build
+
+      - name: Keep only what production needs
+        run: npm prune --omit=dev
+
+      - name: Zip the app
+        run: zip -qr release.zip . -x ".git/*" ".github/*"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: app
+          path: release.zip
+          retention-days: 3
+
+  deploy:
+    needs: build
+    if: ${{ vars.AZURE_WEBAPP_NAME != '' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: app
+
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ vars.AZURE_WEBAPP_NAME }}
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          package: release.zip

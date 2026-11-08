@@ -1,7 +1,7 @@
 # Deploy to Azure (Phase 14)
 
 The whole coach (API + Angular website) runs as **one Azure App Service** on one URL.
-GitHub Actions builds and deploys it every time you push to `main`.
+GitHub Actions (`.github/workflows/azure-deploy.yml`) builds and deploys it every time you push to `main`.
 
 ```
 Browser ──▶ https://<your-app>.azurewebsites.net   (password protected)
@@ -16,7 +16,7 @@ Browser ──▶ https://<your-app>.azurewebsites.net   (password protected)
 
 ## What happens on each deploy
 
-`npm run build` (run by GitHub Actions):
+`npm run build` (run by GitHub Actions, which then removes dev-only packages and zips the app):
 1. `tsc` compiles the API to `dist/`
 2. `scripts/build-web.mjs` builds the Angular app into `frontend/dist/`
 3. `npm run ingest` builds the knowledge index (`data/index.json`)
@@ -39,15 +39,21 @@ gives credit without a credit card).
    - Runtime stack: **Node 24 LTS** (or the newest Node LTS listed)
    - Operating System: **Linux**
    - Region: the closest to you
-   - Pricing plan: **Free F1** to try it out. If it is slow or runs out of quota, scale up to **Basic B1** later.
-3. **Deployment** tab:
-   - Continuous deployment: **Enable**
-   - Sign in to GitHub, then choose Organization `yfatima97`, Repository `AI-Learning-Coach`, Branch `main`
-   - Basic authentication: **Disable** (Azure uses a secure GitHub connection instead)
-4. Click **Review + create**, then **Create**. Wait about a minute, then click **Go to resource**.
+   - Pricing plan: **Free F1**
+3. **Database** tab: leave everything unticked. **Deployment** tab: leave Continuous deployment on **Disable**
+   (the repo has its own deploy workflow, `.github/workflows/azure-deploy.yml`).
+4. Click **Review + create**, then **Create**. Wait for "Your deployment is complete", then click **Go to resource**.
 
-Azure adds a workflow file to your repo (`.github/workflows/main_<app-name>.yml`) and starts the first deploy.
-Run `git pull` on your computer afterwards so you have that file too.
+### 2b. Connect GitHub to the Web App (publish profile)
+1. In the Web App, open **Settings → Configuration**, then the **General settings** tab. Turn
+   **SCM Basic Auth Publishing Credentials** **On**, and click **Save**, then **Continue**.
+2. Go to **Overview** and click **Download publish profile** in the top bar. A `.PublishSettings` file downloads.
+3. Open that file with Notepad, press **Ctrl+A**, then **Ctrl+C** to copy everything.
+4. On GitHub, open your repo, then **Settings → Secrets and variables → Actions**.
+   - **Secrets** tab → **New repository secret**: Name `AZURE_WEBAPP_PUBLISH_PROFILE`, Secret: paste (**Ctrl+V**). Click **Add secret**.
+   - **Variables** tab → **New repository variable**: Name `AZURE_WEBAPP_NAME`, Value: your Web App's name. Click **Add variable**.
+
+The publish profile is a password for deploying. Keep it out of chats, screenshots and code.
 
 ### 3. Add your settings (secrets)
 In your Web App, open **Settings → Environment variables**. On the **App settings** tab, click **+ Add** for each:
@@ -62,9 +68,10 @@ In your Web App, open **Settings → Environment variables**. On the **App setti
 
 Click **Apply**, then **Confirm**. The app restarts.
 
-### 4. Watch the deploy
-Open https://github.com/yfatima97/AI-Learning-Coach/actions. The run "Build and deploy Node.js app to Azure Web App"
-takes 5 to 10 minutes. Wait for the green tick.
+### 4. Deploy
+Open https://github.com/yfatima97/AI-Learning-Coach/actions, click **Deploy to Azure** on the left, then
+**Run workflow** → **Run workflow**. It takes 5 to 10 minutes. Wait for the green tick.
+After that, every push to `main` deploys automatically.
 
 ### 5. Open your app
 Go to `https://<your-app-name>.azurewebsites.net`. The first load can take up to a minute while the app starts.

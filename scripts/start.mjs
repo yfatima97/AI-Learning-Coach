@@ -7,5 +7,6 @@ import path from "node:path";
 const url = process.env.DATABASE_URL || "file:./data/coach.db";
 if (url.startsWith("file:")) mkdirSync(path.dirname(path.resolve(url.slice("file:".length))), { recursive: true });
 
-execSync("npx prisma migrate deploy", { stdio: "inherit" });
+// Call the Prisma CLI file directly: zip deploys can turn node_modules/.bin links into broken copies.
+execSync(`"${process.execPath}" node_modules/prisma/build/index.js migrate deploy`, { stdio: "inherit" });
 await import("../dist/server.js");
