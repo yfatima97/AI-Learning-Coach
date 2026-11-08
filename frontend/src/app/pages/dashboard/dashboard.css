@@ -45,6 +45,8 @@ h2 { font-size: 16px; font-weight: 650; letter-spacing: -0.01em; }
 .emerald { background: #dcfce7; color: #15803d; }
 .amber { background: #fef3c7; color: #b45309; }
 .rose { background: #ffe4e6; color: #be123c; }
+.violet { background: #f3e8ff; color: #7e22ce; }
+.sky { background: #e0f2fe; color: #0369a1; }
 .stat-value { margin: 0; font-size: 34px; font-weight: 750; letter-spacing: -0.03em; line-height: 1.1; }
 .stat-value span { font-size: 18px; font-weight: 600; color: var(--text-muted); margin-left: 2px; }
 .stat-sub { margin: 0; font-size: 13px; color: var(--text-muted); }
@@ -111,6 +113,8 @@ h2 { font-size: 16px; font-weight: 650; letter-spacing: -0.01em; }
   .emerald { background: #12301f; color: #4ade80; }
   .amber { background: #33270c; color: #fbbf24; }
   .rose { background: #3b1520; color: #fb7185; }
+  .violet { background: #2e1a47; color: #c084fc; }
+  .sky { background: #0c2a3d; color: #7dd3fc; }
 }
 @media (max-width: 960px) { .layout { grid-template-columns: 1fr; } }
 @media (max-width: 560px) {

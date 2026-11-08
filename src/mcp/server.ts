@@ -12,6 +12,7 @@ import { formatSources } from "../agents/knowledge.agent.js";
 import { search } from "../vector/store.js";
 import { CoachService } from "../services/coach.service.js";
 import { ProgressService } from "../services/progress.service.js";
+import { runLearningWorkflow } from "../workflows/learning.workflow.js";
 
 const server = new McpServer({ name: "ai-learning-coach", version: "1.0.0" });
 
@@ -29,6 +30,22 @@ function handler<A>(fn: (args: A) => Promise<unknown>) {
 }
 
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"] as const;
+
+server.registerTool(
+  "start_learning_path",
+  {
+    title: "Start a learning path",
+    description:
+      "Run the full agent workflow for a new goal: roadmap, a month-1 starter project and quiz (built in parallel), " +
+      "a fit review of the project, then a progress update. Takes a few minutes.",
+    inputSchema: {
+      request: z.string().describe("The learner's goal in their own words, e.g. 'Teach me AI Engineering'"),
+      durationMonths: z.number().int().optional(),
+      level: z.enum(["beginner", "intermediate", "advanced"]).optional(),
+    },
+  },
+  handler(({ request, durationMonths, level }) => runLearningWorkflow(request, undefined, { durationMonths, level })),
+);
 
 server.registerTool(
   "create_roadmap",

@@ -5,6 +5,7 @@ import { claude, baseParams } from "../config/claude.js";
 import { CoachService } from "../services/coach.service.js";
 import { formatSources } from "./knowledge.agent.js";
 import { search } from "../vector/store.js";
+import { runLearningWorkflow } from "../workflows/learning.workflow.js";
 
 /**
  * The Coach (orchestrator) is itself a Claude agent. Each specialist agent and
@@ -34,6 +35,20 @@ const tools = [
       const results = await search(query);
       return results.length ? formatSources(results) : "No matching material in the knowledge base.";
     },
+  }),
+  betaZodTool({
+    name: "start_learning_path",
+    description:
+      "Run the full learning workflow for a new goal (e.g. 'Teach me AI Engineering'): the Roadmap Agent builds a plan, " +
+      "the Project and Quiz agents create a month-1 starter project and a 5-question quiz, the Review Agent checks the " +
+      "project fits the learner, and progress is updated. Use it when the learner wants to start learning something new. " +
+      "Takes a few minutes. Afterwards, tell them the quiz is ready on the Quiz page and the project is in their queue.",
+    inputSchema: z.object({
+      request: z.string().describe("The learner's goal in their own words"),
+      durationMonths: z.number().int().optional(),
+      level: z.enum(["beginner", "intermediate", "advanced"]).optional(),
+    }),
+    run: async ({ request, durationMonths, level }) => json(await runLearningWorkflow(request, undefined, { durationMonths, level })),
   }),
   betaZodTool({
     name: "create_roadmap",
@@ -88,7 +103,7 @@ const tools = [
 
 const SYSTEM = `You are an AI Learning Coach. Help the learner reach their goal by
 planning, teaching, assessing, reviewing and adapting. Use your tools to check their
-progress, search their study materials, create roadmaps, projects, quizzes, mock
+progress, search their study materials, start a complete learning path for a new goal, create roadmaps, projects, quizzes, mock
 interviews, reviews (including GitHub repos) and calendar study schedules; call only
 the tools the request needs. When recommending what to do next, look at their progress
 first and target weak topics. Finish with a short, friendly summary and the single best next step.`;

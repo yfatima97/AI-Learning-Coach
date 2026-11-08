@@ -1,0 +1,155 @@
+<header class="head">
+  <p class="eyebrow">Agent workflow</p>
+  <h1>Start a learning path</h1>
+  <p class="subtitle">Tell the coach what you want to learn. Its specialist agents work together to build your roadmap, a starter project and a skills check, then update your progress.</p>
+</header>
+
+<form class="card composer" (submit)="$event.preventDefault(); start()">
+  <div class="input-row">
+    <svg class="input-icon" viewBox="0 0 24 24" aria-hidden="true"><path [attr.d]="icons.spark" /></svg>
+    <input [(ngModel)]="goal" name="goal" placeholder="What do you want to learn? e.g. Teach me AI Engineering" [disabled]="running()" aria-label="Your learning goal" />
+    <button class="btn" type="submit" [disabled]="running() || !goal.trim()">
+      @if (running()) { <span class="spinner light"></span> Working… } @else { Start
+        <svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true"><path [attr.d]="icons.arrow" /></svg> }
+    </button>
+  </div>
+  <div class="options">
+    <div class="chips">
+      @for (s of suggestions; track s) {
+        <button type="button" class="suggest" (click)="start(s)" [disabled]="running()">{{ s }}</button>
+      }
+    </div>
+    <div class="selects">
+      <select [(ngModel)]="months" name="months" aria-label="Plan length" [disabled]="running()">
+        <option [ngValue]="null">Length: coach decides</option>
+        <option [ngValue]="3">3 months</option>
+        <option [ngValue]="6">6 months</option>
+        <option [ngValue]="12">12 months</option>
+      </select>
+      <select [(ngModel)]="level" name="level" aria-label="Your level" [disabled]="running()">
+        <option value="">Level: coach decides</option>
+        <option value="beginner">Beginner</option>
+        <option value="intermediate">Intermediate</option>
+        <option value="advanced">Advanced</option>
+      </select>
+    </div>
+  </div>
+</form>
+
+<section class="card pipeline" [class.idle]="!started()">
+  <div class="pipe-head">
+    <div>
+      <h2>{{ started() ? (result() ? 'All agents finished' : 'Agents at work') : 'How it works' }}</h2>
+      <p class="muted small">
+        @if (!started()) { Each agent hands its result to the next. The Project and Quiz agents run at the same time. }
+        @else if (running()) { The roadmap takes the longest, usually one to three minutes. You can watch each step here. }
+        @else { {{ doneCount() }} of {{ steps().length }} steps complete. }
+      </p>
+    </div>
+    @if (started()) {
+      <div class="pipe-progress">
+        <span class="pct">{{ percent() }}%</span>
+        <div class="bar"><span [style.width.%]="percent()"></span></div>
+      </div>
+    }
+  </div>
+
+  <ol class="timeline">
+    <ng-container *ngTemplateOutlet="node; context: { $implicit: step('intake') }" />
+    <ng-container *ngTemplateOutlet="node; context: { $implicit: step('roadmap') }" />
+    <li class="parallel">
+      <span class="parallel-tag">In parallel</span>
+      <ol class="parallel-grid">
+        <ng-container *ngTemplateOutlet="node; context: { $implicit: step('project') }" />
+        <ng-container *ngTemplateOutlet="node; context: { $implicit: step('quiz') }" />
+      </ol>
+    </li>
+    <ng-container *ngTemplateOutlet="node; context: { $implicit: step('review') }" />
+    <ng-container *ngTemplateOutlet="node; context: { $implicit: step('progress') }" />
+  </ol>
+</section>
+
+<ng-template #node let-s>
+  <li class="node" [class]="'node ' + s.status">
+    <span class="dot-icon">
+      @switch (s.status) {
+        @case ('running') { <span class="spinner"></span> }
+        @case ('done') { <svg viewBox="0 0 24 24"><path [attr.d]="icons.check" /></svg> }
+        @case ('error') { <svg viewBox="0 0 24 24"><path [attr.d]="icons.alert" /></svg> }
+        @default { <svg viewBox="0 0 24 24"><path [attr.d]="iconFor(s.id)" /></svg> }
+      }
+    </span>
+    <div class="node-body">
+      <p class="agent">{{ s.agent }}</p>
+      <p class="node-label">{{ s.label }}</p>
+      @if (s.summary) { <p class="node-summary">{{ s.summary }}</p> }
+      @else if (s.status === 'running') { <p class="node-summary muted">Working…</p> }
+    </div>
+    @if (s.seconds) { <span class="secs">{{ s.seconds }}s</span> }
+  </li>
+</ng-template>
+
+@if (error()) {
+  <div class="error pad">{{ error() }}</div>
+}
+
+@if (result(); as r) {
+  <section class="ready">
+    <div class="ready-banner">
+      <span class="ready-icon"><svg viewBox="0 0 24 24"><path [attr.d]="icons.check" /></svg></span>
+      <div>
+        <h2>Your {{ r.goal.skill }} path is ready</h2>
+        <p>{{ r.goal.durationMonths }}-month plan for a {{ r.goal.level }} · Month 1: {{ r.focus.month1Theme }}</p>
+      </div>
+      <a routerLink="/" class="btn light">View dashboard</a>
+    </div>
+
+    <div class="result-grid">
+      <div class="card result">
+        <span class="r-icon indigo"><svg viewBox="0 0 24 24"><path [attr.d]="icons.route" /></svg></span>
+        <p class="agent">Roadmap Agent</p>
+        <h3>{{ r.goal.durationMonths }}-month roadmap</h3>
+        <p class="muted small">Saved as your current goal.</p>
+        <button type="button" class="btn secondary" (click)="toggle('roadmap')">{{ open() === 'roadmap' ? 'Hide roadmap' : 'Read roadmap' }}</button>
+      </div>
+      <div class="card result">
+        <span class="r-icon amber"><svg viewBox="0 0 24 24"><path [attr.d]="icons.folder" /></svg></span>
+        <p class="agent">Project Agent</p>
+        <h3>{{ r.project.title }}</h3>
+        <p class="muted small">Added to your project queue.</p>
+        <button type="button" class="btn secondary" (click)="toggle('project')">{{ open() === 'project' ? 'Hide project' : 'Read project' }}</button>
+      </div>
+      <div class="card result">
+        <span class="r-icon emerald"><svg viewBox="0 0 24 24"><path [attr.d]="icons.quiz" /></svg></span>
+        <p class="agent">Quiz Agent</p>
+        <h3>{{ r.quiz.questionCount }}-question quiz</h3>
+        <p class="muted small">On {{ r.quiz.topic }}.</p>
+        <a class="btn" routerLink="/quiz" [queryParams]="{ id: r.quiz.quizId }">Take the quiz</a>
+      </div>
+      <div class="card result">
+        <span class="r-icon rose"><svg viewBox="0 0 24 24"><path [attr.d]="icons.star" /></svg></span>
+        <p class="agent">Review Agent</p>
+        <h3>Plan fit {{ r.review.rating }}/10</h3>
+        <p class="muted small">{{ r.review.summary }}</p>
+      </div>
+    </div>
+
+    @if (open() === 'roadmap') { <div class="card md doc" [innerHTML]="roadmap() | markdown"></div> }
+    @if (open() === 'project') { <div class="card md doc" [innerHTML]="projectBrief() | markdown"></div> }
+
+    <div class="card tips">
+      <div>
+        <p class="eyebrow accent">Your next step</p>
+        <p class="next">{{ r.nextStep }}</p>
+      </div>
+      @if (r.review.improvements.length) {
+        <div>
+          <p class="eyebrow accent">Tips from the Review Agent</p>
+          <ul>
+            @for (tip of r.review.improvements; track tip) { <li>{{ tip }}</li> }
+          </ul>
+        </div>
+      }
+    </div>
+  </section>
+}

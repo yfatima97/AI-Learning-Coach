@@ -12,3 +12,4 @@ coachRoutes.post("/schedule", CoachController.schedule); // calendar tool -> .ic
 coachRoutes.post("/review-repo", CoachController.reviewRepo); // GitHub tool
 coachRoutes.post("/ask", CoachController.ask); // RAG over knowledge/
 coachRoutes.post("/chat", CoachController.chat); // agentic: Claude picks the agents
+coachRoutes.post("/workflow", CoachController.workflow); // Phase 13: Roadmap -> Project + Quiz -> Review -> Progress (streams NDJSON)

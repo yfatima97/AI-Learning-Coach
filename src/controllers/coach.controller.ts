@@ -2,6 +2,7 @@ import type { Request, Response, NextFunction } from "express";
 import { CoachService } from "../services/coach.service.js";
 import { ProgressService } from "../services/progress.service.js";
 import { CoachOrchestrator } from "../agents/orchestrator.agent.js";
+import { runLearningWorkflow, STEPS, type WorkflowEvent } from "../workflows/learning.workflow.js";
 
 type Handler = (req: Request, res: Response) => Promise<unknown>;
 const wrap = (fn: Handler) => (req: Request, res: Response, next: NextFunction) => fn(req, res).catch(next);
@@ -53,11 +54,37 @@ export const CoachController = {
     required(req.body, "messages");
     res.json(await CoachOrchestrator.chat(req.body.messages));
   }),
+
+  /**
+   * Phase 13 agent workflow. Streams newline-delimited JSON so the UI can show
+   * each agent working: {"type":"steps"} first, then {"type":"step"} updates,
+   * then {"type":"complete"} (or {"type":"error"}).
+   */
+  workflow: wrap(async (req, res) => {
+    required(req.body, "goal");
+    const { goal, durationMonths, level } = req.body;
+    res.status(200).set({ "Content-Type": "application/x-ndjson; charset=utf-8", "Cache-Control": "no-cache", "X-Accel-Buffering": "no" });
+    res.flushHeaders();
+    const send = (e: WorkflowEvent | { type: "steps"; steps: typeof STEPS }) => res.write(JSON.stringify(e) + "\n");
+    send({ type: "steps", steps: STEPS });
+    try {
+      await runLearningWorkflow(String(goal), send, {
+        durationMonths: durationMonths ? Number(durationMonths) : undefined,
+        level: level || undefined,
+      });
+    } catch (err) {
+      send({ type: "error", message: err instanceof Error ? err.message : String(err) });
+    }
+    res.end();
+  }),
 };
 
 export const ProgressController = {
   summary: wrap(async (_req, res) => {
     res.json(await ProgressService.summary());
+  }),
+  getQuiz: wrap(async (req, res) => {
+    res.json(await ProgressService.getQuiz(String(req.params.id)));
   }),
   submitQuiz: wrap(async (req, res) => {
     required(req.body, "answers");
