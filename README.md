@@ -49,7 +49,7 @@ npm run dev               # http://localhost:5000
 | POST | `/api/coach/quiz` | `{ "topic": "Machine Learning", "difficulty": "beginner", "count": 10 }` |
 | POST | `/api/coach/interview` | `{ "role": "AI Engineer", "level": "junior" }` |
 | POST | `/api/coach/review` | `{ "submission": "<code or text>", "context": "optional assignment" }` |
-| POST | `/api/coach/chat` | `{ "messages": [{ "role": "user", "content": "Teach me AI Engineering" }] }` |
+| POST | `/api/coach/chat` | `{ "messages": [{ "role": "user", "content": "Teach me AI Engineering" }] }` returns `{ "reply": "..." }`. To continue, send the history back with `{ "role": "assistant", "content": reply }` appended. |
 
 Try it:
 

@@ -79,6 +79,9 @@ export class CoachOrchestrator {
       .filter((b): b is Anthropic.Beta.BetaTextBlock => b.type === "text")
       .map((b) => b.text)
       .join("\n");
-    return { reply, content: finalMessage.content };
+    // Only the text goes back to the client. The raw content also holds thinking
+    // blocks with long encrypted signatures, which are noise for a UI.
+    // To continue the chat, the client appends { role: "assistant", content: reply }.
+    return { reply };
   }
 }
