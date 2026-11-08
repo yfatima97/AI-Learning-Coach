@@ -35,6 +35,10 @@ export const CoachController = {
     required(req.body, "submission");
     res.json(await CoachService.review(req.body.submission, req.body.context));
   }),
+  ask: wrap(async (req, res) => {
+    required(req.body, "question");
+    res.json(await CoachService.ask(req.body.question));
+  }),
   chat: wrap(async (req, res) => {
     required(req.body, "messages");
     res.json(await CoachService.chat(req.body.messages));

@@ -8,4 +8,5 @@ coachRoutes.post("/project", CoachController.project);
 coachRoutes.post("/quiz", CoachController.quiz);
 coachRoutes.post("/interview", CoachController.interview);
 coachRoutes.post("/review", CoachController.review);
+coachRoutes.post("/ask", CoachController.ask); // RAG over knowledge/
 coachRoutes.post("/chat", CoachController.chat); // agentic: Claude picks the agents
