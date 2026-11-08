@@ -1,9 +1,12 @@
 <div class="shell">
   <aside class="sidebar">
     <a routerLink="/" class="brand">
-      <span class="logo">AI</span>
-      <span class="brand-text">Learning Coach</span>
+      <span class="logo" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path [attr.d]="icons.spark" /></svg>
+      </span>
+      <span class="brand-text">Learning Coach<small>AI mentor</small></span>
     </a>
+    <p class="nav-heading">Menu</p>
     <nav>
       @for (item of nav; track item.path) {
         <a
@@ -12,12 +15,15 @@
           [routerLinkActiveOptions]="{ exact: item.exact }"
           class="nav-link"
         >
-          <span class="nav-icon" aria-hidden="true">{{ item.icon }}</span>
+          <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path [attr.d]="icons[item.icon]" /></svg>
           <span class="nav-label">{{ item.label }}</span>
         </a>
       }
     </nav>
-    <p class="powered">Powered by Claude</p>
+    <div class="powered">
+      <span class="dot"></span>
+      <span>Powered by Claude</span>
+    </div>
   </aside>
   <main class="content">
     <router-outlet />
