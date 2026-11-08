@@ -4,6 +4,7 @@ import { ProjectAgent } from "../agents/project.agent.js";
 import { QuizAgent } from "../agents/quiz.agent.js";
 import { InterviewAgent } from "../agents/interview.agent.js";
 import { ReviewAgent } from "../agents/review.agent.js";
+import { KnowledgeAgent } from "../agents/knowledge.agent.js";
 import { CoachOrchestrator } from "../agents/orchestrator.agent.js";
 
 export class CoachService {
@@ -12,5 +13,6 @@ export class CoachService {
   static quiz = (topic: string, difficulty?: string, count?: number) => QuizAgent.generate(topic, difficulty, count);
   static interview = (role?: string, level?: string) => InterviewAgent.generate(role, level);
   static review = (submission: string, context?: string) => ReviewAgent.review(submission, context);
+  static ask = (question: string) => KnowledgeAgent.ask(question);
   static chat = (history: Anthropic.Beta.BetaMessageParam[]) => CoachOrchestrator.chat(history);
 }

@@ -7,14 +7,27 @@ import { ProjectAgent } from "./project.agent.js";
 import { QuizAgent } from "./quiz.agent.js";
 import { InterviewAgent } from "./interview.agent.js";
 import { ReviewAgent } from "./review.agent.js";
+import { formatSources } from "./knowledge.agent.js";
+import { search } from "../vector/store.js";
 
 /**
  * The Coach (orchestrator) is itself a Claude agent. Each specialist agent is
  * exposed to it as a tool, and Claude decides which ones to call and in what
  * order to reach the learner's goal (Phase 13: agent workflow).
- * Later phases add RAG search, calendar and progress tools here.
+ * Phase 9 added knowledge-base search; later phases add calendar and progress tools.
  */
 const tools = [
+  betaZodTool({
+    name: "search_knowledge_base",
+    description:
+      "Search the learner's own study materials (books, notes, docs in knowledge/). " +
+      "Use it before answering conceptual questions so answers match what they are studying. Cite results like [1].",
+    inputSchema: z.object({ query: z.string().describe("What to look for, in plain words") }),
+    run: async ({ query }) => {
+      const results = await search(query);
+      return results.length ? formatSources(results) : "No matching material in the knowledge base.";
+    },
+  }),
   betaZodTool({
     name: "create_roadmap",
     description: "Create a month-by-month learning roadmap for a goal.",
@@ -56,7 +69,7 @@ const tools = [
 ];
 
 const SYSTEM = `You are an AI Learning Coach. Help the learner reach their goal by
-planning, teaching, assessing and reviewing. Use your tools to create roadmaps,
+planning, teaching, assessing and reviewing. Use your tools to search their study materials, create roadmaps,
 projects, quizzes, mock interviews and reviews; call only the tools the request
 needs. Finish with a short, friendly summary and the single best next step.`;
 

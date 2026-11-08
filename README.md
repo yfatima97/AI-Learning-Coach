@@ -49,6 +49,7 @@ npm run dev               # http://localhost:5000
 | POST | `/api/coach/quiz` | `{ "topic": "Machine Learning", "difficulty": "beginner", "count": 10 }` |
 | POST | `/api/coach/interview` | `{ "role": "AI Engineer", "level": "junior" }` |
 | POST | `/api/coach/review` | `{ "submission": "<code or text>", "context": "optional assignment" }` |
+| POST | `/api/coach/ask` | `{ "question": "What is the difference between RAG and fine-tuning?" }` returns an answer with citations from `knowledge/` |
 | POST | `/api/coach/chat` | `{ "messages": [{ "role": "user", "content": "Teach me AI Engineering" }] }` returns `{ "reply": "..." }`. To continue, send the history back with `{ "role": "assistant", "content": reply }` appended. |
 
 Try it:
@@ -58,13 +59,29 @@ curl -X POST localhost:5000/api/coach/quiz -H "content-type: application/json" \
   -d '{"topic":"Machine Learning","count":3}'
 ```
 
+## RAG (Phase 9)
+
+```
+knowledge/*.pdf|.md|.txt ─► load ─► chunk ─► embed (Voyage AI) ─► data/index.json
+question ─► embed ─► top-5 similar chunks ─► Claude answers with [1] [2] citations
+```
+
+1. Put your PDFs and notes in `knowledge/` (starter notes are included).
+2. Run `npm run ingest` to build the index. Re-run it whenever you add files.
+3. Ask: `POST /api/coach/ask`, or just chat. The Coach agent has a `search_knowledge_base` tool.
+
+Claude doesn't produce embeddings, so semantic search uses **Voyage AI** (set `VOYAGE_API_KEY`
+in `.env`, then re-run ingest). Without a key it falls back to keyword search (BM25), so it works
+with zero setup. The store is a JSON file, which is fine for a personal library; swap it for
+ChromaDB or pgvector at deploy time by reimplementing `src/vector/store.ts`.
+
 ## Build plan
 
 - [x] Phase 1–2: TypeScript backend and folder structure
 - [x] Phase 3: Claude integration
 - [x] Phases 4–8: Roadmap, Project, Quiz, Interview and Review agents
 - [x] Phase 13 (first version): orchestrator agent that chains the specialists
-- [ ] Phase 9: RAG over `knowledge/` (ChromaDB + embeddings)
+- [x] Phase 9: RAG over `knowledge/` (file vector store, Voyage AI embeddings or keyword fallback)
 - [ ] Phase 10: MCP tools (calendar, GitHub, progress)
 - [ ] Phase 11: Prisma + PostgreSQL progress tracking
 - [ ] Phase 12: Angular dashboard and chat UI
@@ -74,15 +91,17 @@ curl -X POST localhost:5000/api/coach/quiz -H "content-type: application/json" \
 
 ```
 src/
-├── agents/        roadmap, project, quiz, interview, review, orchestrator
+├── agents/        roadmap, project, quiz, interview, review, knowledge, orchestrator
 ├── config/        env + Claude client helpers
 ├── controllers/   request validation + responses
 ├── routes/        /api/coach/*
 ├── services/      thin layer the controllers call
 ├── tools/         MCP tools (Phase 10)
 ├── types/         Zod schemas for structured outputs
-├── vector/        RAG / vector store (Phase 9)
+├── scripts/       ingest.ts (builds the RAG index)
+├── vector/        loader, chunker, embeddings, store
 ├── app.ts
 └── server.ts
-knowledge/         PDFs and notes for RAG (Phase 9)
+knowledge/         PDFs and notes for RAG; run `npm run ingest` after changes
+data/              generated index (git-ignored)
 ```
