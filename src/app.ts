@@ -2,6 +2,7 @@ import express, { type Request, type Response, type NextFunction } from "express
 import cors from "cors";
 import Anthropic from "@anthropic-ai/sdk";
 import { coachRoutes } from "./routes/coach.routes.js";
+import { progressRoutes } from "./routes/progress.routes.js";
 
 export const app = express();
 
@@ -12,6 +13,7 @@ app.get("/health", (_req, res) => {
   res.json({ status: "ok" });
 });
 app.use("/api/coach", coachRoutes);
+app.use("/api/progress", progressRoutes);
 
 app.use((err: Error & { status?: number }, _req: Request, res: Response, _next: NextFunction) => {
   if (err instanceof Anthropic.RateLimitError) {

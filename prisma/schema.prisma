@@ -1,0 +1,90 @@
+// Progress tracking (Phase 11).
+// Local development uses SQLite (a single file, nothing to install).
+// For Azure PostgreSQL (Phase 14) change provider to "postgresql" and DATABASE_URL.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id          String       @id @default(cuid())
+  name        String       @unique
+  createdAt   DateTime     @default(now())
+  goals       Goal[]
+  projects    Project[]
+  quizzes     Quiz[]
+  submissions Submission[]
+  interviews  Interview[]
+}
+
+model Goal {
+  id             String   @id @default(cuid())
+  user           User     @relation(fields: [userId], references: [id])
+  userId         String
+  skill          String
+  durationMonths Int
+  level          String?
+  roadmap        String // Markdown roadmap from the Roadmap agent
+  active         Boolean  @default(true)
+  createdAt      DateTime @default(now())
+}
+
+model Project {
+  id          String       @id @default(cuid())
+  user        User         @relation(fields: [userId], references: [id])
+  userId      String
+  title       String
+  brief       String // Markdown brief from the Project agent
+  status      String       @default("todo") // todo | in_progress | submitted | done
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  submissions Submission[]
+}
+
+model Quiz {
+  id         String        @id @default(cuid())
+  user       User          @relation(fields: [userId], references: [id])
+  userId     String
+  topic      String
+  difficulty String
+  questions  Json
+  createdAt  DateTime      @default(now())
+  attempts   QuizAttempt[]
+}
+
+model QuizAttempt {
+  id        String   @id @default(cuid())
+  quiz      Quiz     @relation(fields: [quizId], references: [id])
+  quizId    String
+  answers   Json
+  score     Int
+  total     Int
+  createdAt DateTime @default(now())
+}
+
+model Submission {
+  id        String   @id @default(cuid())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  project   Project? @relation(fields: [projectId], references: [id])
+  projectId String?
+  kind      String // code | github
+  source    String // pasted code (trimmed) or repo URL
+  rating    Int
+  review    Json
+  createdAt DateTime @default(now())
+}
+
+model Interview {
+  id        String   @id @default(cuid())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  role      String
+  questions Json
+  createdAt DateTime @default(now())
+}

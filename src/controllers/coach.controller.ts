@@ -1,7 +1,7 @@
 import type { Request, Response, NextFunction } from "express";
 import { CoachService } from "../services/coach.service.js";
-import { scheduleStudyPlan } from "../tools/calendar.tool.js";
-import { reviewGithubRepo } from "../tools/github.tool.js";
+import { ProgressService } from "../services/progress.service.js";
+import { CoachOrchestrator } from "../agents/orchestrator.agent.js";
 
 type Handler = (req: Request, res: Response) => Promise<unknown>;
 const wrap = (fn: Handler) => (req: Request, res: Response, next: NextFunction) => fn(req, res).catch(next);
@@ -19,11 +19,11 @@ export const CoachController = {
   roadmap: wrap(async (req, res) => {
     required(req.body, "skill");
     const { skill, durationMonths = 12, currentLevel } = req.body;
-    res.json({ roadmap: await CoachService.roadmap(skill, Number(durationMonths), currentLevel) });
+    res.json(await CoachService.roadmap(skill, Number(durationMonths), currentLevel));
   }),
   project: wrap(async (req, res) => {
     required(req.body, "learnedSoFar");
-    res.json({ project: await CoachService.project(req.body.learnedSoFar, req.body.level) });
+    res.json(await CoachService.project(req.body.learnedSoFar, req.body.level));
   }),
   quiz: wrap(async (req, res) => {
     required(req.body, "topic");
@@ -35,15 +35,15 @@ export const CoachController = {
   }),
   review: wrap(async (req, res) => {
     required(req.body, "submission");
-    res.json(await CoachService.review(req.body.submission, req.body.context));
+    res.json(await CoachService.review(req.body.submission, req.body.context, req.body.projectId));
   }),
   schedule: wrap(async (req, res) => {
     required(req.body, "goal");
-    res.json(await scheduleStudyPlan(req.body));
+    res.json(await CoachService.schedule(req.body));
   }),
   reviewRepo: wrap(async (req, res) => {
     required(req.body, "url");
-    res.json(await reviewGithubRepo(req.body.url, req.body.context));
+    res.json(await CoachService.reviewRepo(req.body.url, req.body.context, req.body.projectId));
   }),
   ask: wrap(async (req, res) => {
     required(req.body, "question");
@@ -51,6 +51,21 @@ export const CoachController = {
   }),
   chat: wrap(async (req, res) => {
     required(req.body, "messages");
-    res.json(await CoachService.chat(req.body.messages));
+    res.json(await CoachOrchestrator.chat(req.body.messages));
+  }),
+};
+
+export const ProgressController = {
+  summary: wrap(async (_req, res) => {
+    res.json(await ProgressService.summary());
+  }),
+  submitQuiz: wrap(async (req, res) => {
+    required(req.body, "answers");
+    if (!Array.isArray(req.body.answers)) throw Object.assign(new Error("answers must be an array of option indexes"), { status: 400 });
+    res.json(await ProgressService.submitQuiz(String(req.params.id), req.body.answers.map(Number)));
+  }),
+  projectStatus: wrap(async (req, res) => {
+    required(req.body, "status");
+    res.json(await ProgressService.setProjectStatus(String(req.params.id), req.body.status));
   }),
 };
